@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Генератор паролей</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --surface2: #f0efe9;
+      --border: rgba(0,0,0,0.12);
+      --border2: rgba(0,0,0,0.22);
+      --text: #1a1a18;
+      --text2: #6b6b66;
+      --text3: #a0a09a;
+      --accent: #1D9E75;
+      --accent-dark: #0F6E56;
+      --accent-light: #E1F5EE;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141412;
+        --surface: #1e1e1b;
+        --surface2: #252522;
+        --border: rgba(255,255,255,0.10);
+        --border2: rgba(255,255,255,0.20);
+        --text: #f0efe9;
+        --text2: #a0a09a;
+        --text3: #606060;
+        --accent-light: #0a3d2c;
+      }
+    }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border2);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.07);
+    }
+
+    .header { margin-bottom: 2rem; }
+
+    .title {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .accent { color: var(--accent); }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text2);
+    }
+
+    .output-area {
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.25rem 1rem;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
+    .password-display {
+      font-family: 'Space Mono', monospace;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-all;
+      letter-spacing: 2px;
+      line-height: 1.5;
+      min-height: 32px;
+      padding-right: 80px;
+      transition: opacity 0.15s;
+    }
+
+    .password-display.flash { opacity: 0; }
+
+    .strength-bar {
+      display: flex;
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .strength-seg {
+      height: 4px;
+      flex: 1;
+      border-radius: 2px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+
+    .strength-label {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 6px;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--surface);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      font-size: 13px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .copy-btn:hover { color: var(--text); }
+    .copy-btn.copied { color: var(--accent); border-color: var(--accent); }
+
+    .length-row {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .length-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border2);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover { background: var(--accent-dark); }
+
+    .length-val {
+      font-family: 'Space Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+
+    .option {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+
+    .option:hover { border-color: var(--border2); }
+    .option.active { border-color: var(--accent); background: var(--accent-light); }
+
+    .opt-check {
+      width: 18px; height: 18px;
+      border-radius: 5px;
+      border: 1.5px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      font-size: 12px;
+    }
+
+    .option.active .opt-check {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .opt-check-mark { display: none; }
+    .option.active .opt-check-mark { display: block; }
+    .opt-check-hide { display: block; }
+    .option.active .opt-check-hide { display: none; }
+
+    .opt-label { font-size: 13px; font-weight: 700; color: var(--text); }
+    .opt-sub { font-size: 11px; color: var(--text2); }
+
+    .actions { display: flex; gap: 10px; }
+
+    .gen-btn {
+      flex: 1;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: -0.3px;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .gen-btn:hover { background: var(--accent-dark); }
+    .gen-btn:active { transform: scale(0.98); }
+
+    .hist-btn {
+      padding: 14px 16px;
+      background: var(--surface2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hist-btn:hover { color: var(--text); border-color: var(--border2); }
+
+    .history {
+      margin-top: 1.25rem;
+      border-top: 0.5px solid var(--border);
+      padding-top: 1rem;
+      display: none;
+    }
+
+    .history.open { display: block; }
+
+    .history-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 8px;
+    }
+
+    .hist-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 0.5px solid var(--border);
+      gap: 10px;
+    }
+
+    .hist-item:last-child { border-bottom: none; }
+
+    .hist-pw {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      word-break: break-all;
+      flex: 1;
+    }
+
+    .hist-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--accent-light);
+      color: var(--accent-dark);
+      white-space: nowrap;
+    }
+
+    .hist-copy {
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--text3);
+      padding: 2px 4px;
+      transition: color 0.15s;
+    }
+
+    .hist-copy:hover { color: var(--accent); }
+
+    .footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 12px;
+      color: var(--text3);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1 class="title">Генератор<br>паролей <span class="accent">🔐</span></h1>
+      <p class="subtitle">Надёжно. Быстро. Без компромиссов.</p>
+    </div>
+
+    <div class="output-area">
+      <div class="password-display" id="pw-display">Нажмите «Создать»</div>
+      <div class="strength-bar">
+        <div class="strength-seg" id="s1"></div>
+        <div class="strength-seg" id="s2"></div>
+        <div class="strength-seg" id="s3"></div>
+        <div class="strength-seg" id="s4"></div>
+      </div>
+      <div class="strength-label" id="strength-label">— настройте параметры и жмите кнопку</div>
+      <button class="copy-btn" id="copy-btn" onclick="copyPw()">
+        <i class="ti ti-copy"></i> Копировать
+      </button>
+    </div>
+
+    <div class="length-row">
+      <span class="length-label">Длина</span>
+      <input type="range" min="8" max="64" value="16" step="1" id="length-slider" oninput="updateLength()" />
+      <span class="length-val" id="length-val">16</span>
+    </div>
+
+    <div class="options">
+      <div class="option active" id="opt-upper" onclick="toggleOpt('upper')">
+        <div class="opt-check">
+          <span class="opt-check-mark"><i class="ti ti-check"></i></span>
+        </div>
+        <div><div class="opt-label">A–Z</div><div class="opt-sub">Заглавные</div></div>
+      </div>
+      <div class="option active" id="opt-lower" onclick="toggleOpt('lower')">
+        <div class="opt-check">
+          <span class="opt-check-mark"><i class="ti ti-check"></i></span>
+        </div>
+        <div><div class="opt-label">a–z</div><div class="opt-sub">Строчные</div></div>
+      </div>
+      <div class="option active" id="opt-nums" onclick="toggleOpt('nums')">
+        <div class="opt-check">
+          <span class="opt-check-mark"><i class="ti ti-check"></i></span>
+        </div>
+        <div><div class="opt-label">0–9</div><div class="opt-sub">Цифры</div></div>
+      </div>
+      <div class="option active" id="opt-syms" onclick="toggleOpt('syms')">
+        <div class="opt-check">
+          <span class="opt-check-mark"><i class="ti ti-check"></i></span>
+        </div>
+        <div><div class="opt-label">!@#$</div><div class="opt-sub">Символы</div></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="gen-btn" onclick="generate()">
+        <i class="ti ti-refresh"></i> Создать пароль
+      </button>
+      <button class="hist-btn" onclick="toggleHistory()">
+        <i class="ti ti-history"></i> История
+      </button>
+    </div>
+
+    <div class="history" id="history-panel">
+      <div class="history-title">Последние пароли</div>
+      <div id="history-list"></div>
+    </div>
+
+    <p class="footer">Пароли генерируются локально — никуда не отправляются</p>
+  </div>
+
+  <script>
+    const opts = { upper: true, lower: true, nums: true, syms: true };
+    const history = [];
+    let currentPw = '';
+
+    function toggleOpt(key) {
+      const active = Object.values(opts).filter(Boolean).length;
+      if (opts[key] && active === 1) return;
+      opts[key] = !opts[key];
+      document.getElementById('opt-' + key).classList.toggle('active', opts[key]);
+    }
+
+    function updateLength() {
+      document.getElementById('length-val').textContent = document.getElementById('length-slider').value;
+    }
+
+    function generate() {
+      const len = parseInt(document.getElementById('length-slider').value);
+      const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const lower = 'abcdefghijklmnopqrstuvwxyz';
+      const nums  = '0123456789';
+      const syms  = '!@#$%^&*()-_=+[]{}|;:,.<>?';
+
+      let pool = '';
+      let guaranteed = [];
+
+      if (opts.upper) { pool += upper; guaranteed.push(upper[Math.floor(Math.random() * upper.length)]); }
+      if (opts.lower) { pool += lower; guaranteed.push(lower[Math.floor(Math.random() * lower.length)]); }
+      if (opts.nums)  { pool += nums;  guaranteed.push(nums[Math.floor(Math.random() * nums.length)]); }
+      if (opts.syms)  { pool += syms;  guaranteed.push(syms[Math.floor(Math.random() * syms.length)]); }
+
+      let pw = [...guaranteed];
+      for (let i = pw.length; i < len; i++) pw.push(pool[Math.floor(Math.random() * pool.length)]);
+      pw = pw.sort(() => Math.random() - 0.5).join('');
+
+      const el = document.getElementById('pw-display');
+      el.classList.add('flash');
+      setTimeout(() => {
+        currentPw = pw;
+        el.textContent = pw;
+        el.classList.remove('flash');
+        updateStrength(pw);
+      }, 120);
+
+      history.unshift(pw);
+      if (history.length > 8) history.pop();
+      renderHistory();
+    }
+
+    function updateStrength(pw) {
+      const segs = [document.getElementById('s1'), document.getElementById('s2'), document.getElementById('s3'), document.getElementById('s4')];
+      const label = document.getElementById('strength-label');
+
+      let score = 0;
+      if (pw.length >= 12) score++;
+      if (pw.length >= 20) score++;
+      if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+      if (/[0-9]/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+      const level = score <= 1 ? 1 : score <= 2 ? 2 : score <= 3 ? 3 : 4;
+      const colors = ['', '#E24B4A', '#EF9F27', '#1D9E75', '#0F6E56'];
+      const labels = ['', '😬 Слабый', '😐 Средний', '💪 Хороший', '🔒 Отличный!'];
+
+      segs.forEach((s, i) => { s.style.background = i < level ? colors[level] : ''; });
+      label.textContent = labels[level];
+    }
+
+    function copyPw() {
+      if (!currentPw) return;
+      navigator.clipboard.writeText(currentPw).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<i class="ti ti-check"></i> Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = '<i class="ti ti-copy"></i> Копировать';
+          btn.classList.remove('copied');
+        }, 1800);
+      });
+    }
+
+    function toggleHistory() {
+      document.getElementById('history-panel').classList.toggle('open');
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('history-list');
+      if (!history.length) {
+        list.innerHTML = '<p style="font-size:13px;color:var(--text3)">Пока пусто</p>';
+        return;
+      }
+      list.innerHTML = history.map((pw, i) =>
+        `<div class="hist-item">
+          <span class="hist-pw">${pw}</span>
+          ${i === 0 ? '<span class="hist-tag">новый</span>' : ''}
+          <button class="hist-copy" onclick="copyText('${pw.replace(/'/g, "\\'")}')" title="Копировать">
+            <i class="ti ti-copy"></i>
+          </button>
+        </div>`
+      ).join('');
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text);
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space' || e.code === 'Enter') {
+        if (document.activeElement === document.body) {
+          e.preventDefault();
+          generate();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
