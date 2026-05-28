@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Генератор паролей</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --surface2: #f0efe9;
+      --border: rgba(0,0,0,0.12);
+      --border2: rgba(0,0,0,0.22);
+      --text: #1a1a18;
+      --text2: #6b6b66;
+      --text3: #a0a09a;
+      --accent: #1D9E75;
+      --accent-dark: #0F6E56;
+      --accent-light: #E1F5EE;
+      --gold: #BA7517;
+      --gold-light: #FAEEDA;
+      --gold-dark: #854F0B;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141412;
+        --surface: #1e1e1b;
+        --surface2: #252522;
+        --border: rgba(255,255,255,0.10);
+        --border2: rgba(255,255,255,0.20);
+        --text: #f0efe9;
+        --text2: #a0a09a;
+        --text3: #606060;
+        --accent-light: #0a3d2c;
+        --gold-light: #2a1f08;
+      }
+    }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border2);
+      border-radius: 20px;
+      padding: 2.5rem 2.5rem;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.07);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .header { flex: 1; }
+
+    .title {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .accent { color: var(--accent); }
+
+    .subtitle { font-size: 14px; color: var(--text2); }
+
+    .premium-badge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-light);
+      border: 1px solid var(--gold);
+      border-radius: 30px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--gold-dark);
+      white-space: nowrap;
+    }
+
+    .premium-badge.visible { display: flex; }
+
+    .buy-btn {
+      background: var(--gold-light);
+      border: 1px solid var(--gold);
+      border-radius: 30px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--gold-dark);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      font-family: 'Syne', sans-serif;
+    }
+
+    .buy-btn:hover { background: #FAC775; }
+
+    .contact-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .contact-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text3);
+      text-decoration: none;
+      padding: 4px 10px;
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      transition: all 0.15s;
+    }
+
+    .contact-link:hover { color: var(--text2); border-color: var(--border2); }
+
+    .output-area {
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.25rem 1rem;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
+    .password-display {
+      font-family: 'Space Mono', monospace;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-all;
+      letter-spacing: 2px;
+      line-height: 1.5;
+      min-height: 32px;
+      padding-right: 110px;
+      transition: opacity 0.15s;
+    }
+
+    .password-display.flash { opacity: 0; }
+
+    .strength-bar { display: flex; gap: 4px; margin-top: 10px; }
+
+    .strength-seg {
+      height: 4px;
+      flex: 1;
+      border-radius: 2px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+
+    .strength-label { font-size: 12px; color: var(--text3); margin-top: 6px; }
+
+    .copy-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--surface);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      font-size: 13px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .copy-btn:hover { color: var(--text); }
+    .copy-btn.copied { color: var(--accent); border-color: var(--accent); }
+
+    .length-row {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .length-label { font-size: 13px; font-weight: 700; color: var(--text2); white-space: nowrap; }
+
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border2);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover { background: var(--accent-dark); }
+
+    .length-val {
+      font-family: 'Space Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+
+    .option {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+
+    .option:hover { border-color: var(--border2); }
+    .option.active { border-color: var(--accent); background: var(--accent-light); }
+    .option.locked { opacity: 0.5; cursor: not-allowed; }
+
+    .opt-check {
+      width: 18px; height: 18px;
+      border-radius: 5px;
+      border: 1.5px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      font-size: 12px;
+    }
+
+    .option.active .opt-check { background: var(--accent); border-color: var(--accent); color: white; }
+
+    .opt-check-mark { display: none; }
+    .option.active .opt-check-mark { display: block; }
+
+    .opt-label { font-size: 13px; font-weight: 700; color: var(--text); }
+    .opt-sub { font-size: 11px; color: var(--text2); }
+
+    .premium-lock {
+      display: none;
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .option.locked .premium-lock { display: block; }
+    .option.locked .opt-sub { display: none; }
+
+    .actions { display: flex; gap: 10px; }
+
+    .gen-btn {
+      flex: 1;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: -0.3px;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .gen-btn:hover { background: var(--accent-dark); }
+    .gen-btn:active { transform: scale(0.98); }
+
+    .hist-btn {
+      padding: 14px 16px;
+      background: var(--surface2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hist-btn:hover { color: var(--text); }
+
+    .history { margin-top: 1.25rem; border-top: 0.5px solid var(--border); padding-top: 1rem; display: none; }
+    .history.open { display: block; }
+
+    .history-title { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
+
+    .hist-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 0; border-bottom: 0.5px solid var(--border); gap: 10px;
+    }
+    .hist-item:last-child { border-bottom: none; }
+
+    .hist-pw { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text); word-break: break-all; flex: 1; }
+
+    .hist-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: var(--accent-light); color: var(--accent-dark); white-space: nowrap; }
+
+    .hist-copy { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text3); padding: 2px 4px; transition: color 0.15s; }
+    .hist-copy:hover { color: var(--accent); }
+
+    .footer { text-align: center; margin-top: 1.5rem; font-size: 12px; color: var(--text3); }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 420px;
+      width: 100%;
+      border: 0.5px solid var(--border2);
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: var(--text3);
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 6px; letter-spacing: -0.5px; }
+    .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
+
+    .modal-price {
+      background: var(--gold-light);
+      border: 1px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-price-label { font-size: 13px; color: var(--gold-dark); font-weight: 700; }
+    .modal-price-val { font-size: 22px; font-weight: 800; color: var(--gold-dark); font-family: 'Space Mono', monospace; }
+
+    .modal-perks { margin-bottom: 1.5rem; }
+    .modal-perk { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); padding: 5px 0; }
+    .modal-perk i { color: var(--accent); font-size: 16px; }
+
+    .modal-contacts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+
+    .modal-contact-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+
+    .modal-contact-link:hover { border-color: var(--accent); color: var(--accent); }
+    .modal-contact-link i { font-size: 18px; }
+
+    .modal-note { font-size: 11px; color: var(--text3); text-align: center; line-height: 1.5; }
+
+    /* Demo activate btn */
+    .demo-activate {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: background 0.15s;
+    }
+    .demo-activate:hover { background: var(--accent-dark); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="top-bar">
+      <div class="header">
+        <h1 class="title">Генератор<br>паролей <span class="accent">🔐</span></h1>
+        <p class="subtitle">Надёжно. Быстро. Без компромиссов.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+        <div class="premium-badge" id="premium-badge">⭐ Премиум</div>
+        <button class="buy-btn" id="buy-btn" onclick="openModal()">✦ Купить премиум — 250 ₸</button>
+      </div>
+    </div>
+
+    <div class="contact-bar">
+      <a class="contact-link" href="https://www.tiktok.com/@yagami2447" target="_blank">
+        <i class="ti ti-brand-tiktok"></i> @yagami2447
+      </a>
+      <a class="contact-link" href="mailto:zhan_tore14@icloud.com">
+        <i class="ti ti-mail"></i> zhan_tore14@icloud.com
+      </a>
+    </div>
+
+    <div class="output-area">
+      <div class="password-display" id="pw-display">Нажмите «Создать»</div>
+      <div class="strength-bar">
+        <div class="strength-seg" id="s1"></div>
+        <div class="strength-seg" id="s2"></div>
+        <div class="strength-seg" id="s3"></div>
+        <div class="strength-seg" id="s4"></div>
+      </div>
+      <div class="strength-label" id="strength-label">— настройте параметры и жмите кнопку</div>
+      <button class="copy-btn" id="copy-btn" onclick="copyPw()">
+        <i class="ti ti-copy"></i> Копировать
+      </button>
+    </div>
+
+    <div class="length-row">
+      <span class="length-label">Длина</span>
+      <input type="range" min="8" max="64" value="16" step="1" id="length-slider" oninput="updateLength()" />
+      <span class="length-val" id="length-val">16</span>
+    </div>
+
+    <div class="options">
+      <div class="option active" id="opt-upper" onclick="toggleOpt('upper')">
+        <div class="opt-check"><span class="opt-check-mark"><i class="ti ti-check"></i></span></div>
+        <div><div class="opt-label">A–Z</div><div class="opt-sub">Заглавные</div><div class="premium-lock">🔒 Премиум</div></div>
+      </div>
+      <div class="option active" id="opt-lower" onclick="toggleOpt('lower')">
+        <div class="opt-check"><span class="opt-check-mark"><i class="ti ti-check"></i></span></div>
+        <div><div class="opt-label">a–z</div><div class="opt-sub">Строчные</div><div class="premium-lock">🔒 Премиум</div></div>
+      </div>
+      <div class="option active" id="opt-nums" onclick="toggleOpt('nums')">
+        <div class="opt-check"><span class="opt-check-mark"><i class="ti ti-check"></i></span></div>
+        <div><div class="opt-label">0–9</div><div class="opt-sub">Цифры</div><div class="premium-lock">🔒 Премиум</div></div>
+      </div>
+      <div class="option" id="opt-syms" onclick="toggleOpt('syms')">
+        <div class="opt-check"><span class="opt-check-mark"><i class="ti ti-check"></i></span></div>
+        <div><div class="opt-label">!@#$</div><div class="opt-sub">Символы</div><div class="premium-lock">🔒 Премиум</div></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="gen-btn" onclick="generate()">
+        <i class="ti ti-refresh"></i> Создать пароль
+      </button>
+      <button class="hist-btn" onclick="toggleHistory()">
+        <i class="ti ti-history"></i> История
+      </button>
+    </div>
+
+    <div class="history" id="history-panel">
+      <div class="history-title">Последние пароли</div>
+      <div id="history-list"></div>
+    </div>
+
+    <p class="footer">Пароли генерируются локально — никуда не отправляются</p>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+      <div class="modal-title">✦ Премиум доступ</div>
+      <div class="modal-sub">Напишите мне и я активирую премиум после оплаты</div>
+
+      <div class="modal-price">
+        <span class="modal-price-label">Разовая оплата</span>
+        <span class="modal-price-val">250 ₸</span>
+      </div>
+
+      <div class="modal-perks">
+        <div class="modal-perk"><i class="ti ti-shield-check"></i> Максимально защищённые пароли</div>
+        <div class="modal-perk"><i class="ti ti-lock"></i> Пароли от 9 символов с гарантией</div>
+        <div class="modal-perk"><i class="ti ti-star"></i> Значок ⭐ Премиум на сайте</div>
+        <div class="modal-perk"><i class="ti ti-infinity"></i> Все типы символов разблокированы</div>
+      </div>
+
+      <div class="modal-contacts">
+        <a class="modal-contact-link" href="https://www.tiktok.com/@yagami2447" target="_blank">
+          <i class="ti ti-brand-tiktok"></i> Написать в TikTok — @yagami2447
+        </a>
+        <a class="modal-contact-link" href="mailto:zhan_tore14@icloud.com">
+          <i class="ti ti-mail"></i> zhan_tore14@icloud.com
+        </a>
+      </div>
+
+      <button class="demo-activate" onclick="activatePremium()">
+        ✦ У меня уже есть доступ — активировать
+      </button>
+
+      <div class="modal-note">После оплаты напишите мне в TikTok или на почту.<br>Активация в течение нескольких часов.</div>
+    </div>
+  </div>
+
+  <script>
+    const opts = { upper: true, lower: true, nums: true, syms: false };
+    const history = [];
+    let currentPw = '';
+    let isPremium = false;
+
+    function toggleOpt(key) {
+      if (!isPremium && key === 'syms') { openModal(); return; }
+      const active = Object.values(opts).filter(Boolean).length;
+      if (opts[key] && active === 1) return;
+      opts[key] = !opts[key];
+      document.getElementById('opt-' + key).classList.toggle('active', opts[key]);
+    }
+
+    function updateLength() {
+      const val = parseInt(document.getElementById('length-slider').value);
+      if (!isPremium && val < 8) { document.getElementById('length-slider').value = 8; return; }
+      document.getElementById('length-val').textContent = val;
+    }
+
+    function generate() {
+      const slider = document.getElementById('length-slider');
+      let len = parseInt(slider.value);
+      if (isPremium && len < 9) { len = 9; slider.value = 9; document.getElementById('length-val').textContent = 9; }
+
+      const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const lower = 'abcdefghijklmnopqrstuvwxyz';
+      const nums  = '0123456789';
+      const syms  = '!@#$%^&*()-_=+[]{}|;:,.<>?';
+
+      let pool = '';
+      let guaranteed = [];
+
+      if (opts.upper) { pool += upper; guaranteed.push(upper[Math.floor(Math.random()*upper.length)]); }
+      if (opts.lower) { pool += lower; guaranteed.push(lower[Math.floor(Math.random()*lower.length)]); }
+      if (opts.nums)  { pool += nums;  guaranteed.push(nums[Math.floor(Math.random()*nums.length)]); }
+      if (opts.syms)  { pool += syms;  guaranteed.push(syms[Math.floor(Math.random()*syms.length)]); }
+
+      if (!pool) return;
+
+      let pw = [...guaranteed];
+      for (let i = pw.length; i < len; i++) pw.push(pool[Math.floor(Math.random()*pool.length)]);
+      pw = pw.sort(() => Math.random() - 0.5).join('');
+
+      const el = document.getElementById('pw-display');
+      el.classList.add('flash');
+      setTimeout(() => {
+        currentPw = pw;
+        el.textContent = pw;
+        el.classList.remove('flash');
+        updateStrength(pw);
+      }, 120);
+
+      history.unshift(pw);
+      if (history.length > 8) history.pop();
+      renderHistory();
+    }
+
+    function updateStrength(pw) {
+      const segs = ['s1','s2','s3','s4'].map(id => document.getElementById(id));
+      const label = document.getElementById('strength-label');
+      let score = 0;
+      if (pw.length >= 12) score++;
+      if (pw.length >= 20) score++;
+      if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+      if (/[0-9]/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+      const level = score <= 1 ? 1 : score <= 2 ? 2 : score <= 3 ? 3 : 4;
+      const colors = ['','#E24B4A','#EF9F27','#1D9E75','#0F6E56'];
+      const labels = ['','😬 Слабый','😐 Средний','💪 Хороший','🔒 Отличный!'];
+      segs.forEach((s, i) => { s.style.background = i < level ? colors[level] : ''; });
+      label.textContent = labels[level];
+    }
+
+    function copyPw() {
+      if (!currentPw) return;
+      navigator.clipboard.writeText(currentPw).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<i class="ti ti-check"></i> Скопировано!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy"></i> Копировать'; btn.classList.remove('copied'); }, 1800);
+      });
+    }
+
+    function toggleHistory() { document.getElementById('history-panel').classList.toggle('open'); }
+
+    function renderHistory() {
+      const list = document.getElementById('history-list');
+      if (!history.length) { list.innerHTML = '<p style="font-size:13px;color:var(--text3)">Пока пусто</p>'; return; }
+      list.innerHTML = history.map((pw, i) =>
+        `<div class="hist-item">
+          <span class="hist-pw">${pw}</span>
+          ${i === 0 ? '<span class="hist-tag">новый</span>' : ''}
+          <button class="hist-copy" onclick="copyText('${pw.replace(/'/g,"\\'")}')"><i class="ti ti-copy"></i></button>
+        </div>`
+      ).join('');
+    }
+
+    function copyText(text) { navigator.clipboard.writeText(text); }
+
+    function openModal() { document.getElementById('modal').classList.add('open'); }
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+    function activatePremium() {
+      isPremium = true;
+      document.getElementById('premium-badge').classList.add('visible');
+      document.getElementById('buy-btn').style.display = 'none';
+      const symsOpt = document.getElementById('opt-syms');
+      symsOpt.classList.remove('locked');
+      symsOpt.querySelector('.premium-lock').style.display = 'none';
+      symsOpt.querySelector('.opt-sub').style.display = 'block';
+      const slider = document.getElementById('length-slider');
+      slider.min = 9;
+      closeModal();
+    }
+
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Escape') closeModal();
+      if ((e.code === 'Space' || e.code === 'Enter') && document.activeElement === document.body) {
+        e.preventDefault(); generate();
+      }
+    });
+
+    // Lock syms option visually on load
+    document.getElementById('opt-syms').classList.add('locked');
+  </script>
+</body>
+</html>
